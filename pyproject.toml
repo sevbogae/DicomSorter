@@ -1,0 +1,22 @@
+[project]
+name = "dicomsorter"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "pathlib>=1.0.1",
+]
+
+[project.scripts]
+ds = "src.dicomsorter.app:main"
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+include = [
+    "src/dicomsorter/**",
+    "README.md",
+]
