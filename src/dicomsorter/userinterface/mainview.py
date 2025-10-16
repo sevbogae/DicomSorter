@@ -218,6 +218,7 @@ class MainView:
                             message=f"{self._title}\n"
                                     f"Seppe Van Bogaert\n"
                                     f"Universiteit Gent\n"
+                                    f"https://github.com/sevbogae/DicomSorter"
                                     f"Version {'.'.join([str(i) for i in self._version])}")
 
     @staticmethod
@@ -229,7 +230,8 @@ class MainView:
                                     f"Inside the 'Source Folder', select the folder containing the unsorted DICOM files. You can use the 'Browse...' button to navigate using the file explorer. The 'Destination Folder' is where the sorted DICOM files will be saved. This folder will be created if it does not exist. You can also use the 'Browse...' button here.\n\n"
                                     f"The 'File name structure' and 'Folder name structure' fields allow you to control how the sorting is done. You can use DICOM tags enclosed in curly braces {{}} to define the structure. The 'File name structure' defines how the files will be named, while the 'Folder name structure' defines how the files will be organized into folders. You can use the 'Default' buttons to reset the structures to their default values.\n\n"
                                     f"You can find a list of supported DICOM tags by navigating to 'Help' > 'DICOM Tags'. Use the Keyword column.\n\n"
-                                    f"If you end up in trouble, please report the issue."
+                                    f"If you end up in trouble, please report the issue.\n\n"
+                                    f"For the source code, visit GitHub: https://github.com/sevbogae/DicomSorter.git"
                             )
 
     def run(self) -> None:
