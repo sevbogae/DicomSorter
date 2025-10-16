@@ -14,8 +14,8 @@ class MainView:
 
         self._size: tuple[int, int] = (800, 260)
         self._position: tuple[int, int] = (0, 0)
-        self._title: str = "DICOM Sorter"
-        self._version: tuple[int, int] = (1, 0)
+        self._title: str = "DORA: DICOM Organizer Application"
+        self._version: tuple[int, int] = (1, 1)
         self._author: str = "Seppe Van Bogaert"
         self._year: str = "2025"
 
@@ -224,7 +224,7 @@ class MainView:
     def _show_help() -> None:
         """Show the dialog 'Help'."""
         messagebox.showinfo(title="Help",
-                            message=f"This is a simple DICOM sorter application.\n\n"
+                            message=f"DORA, which stands for Dicom ORganizer Application, is a tool to help you sort your DICOM files.\n\n"
                                     f"It sorts DICOM files inside a single folder into a folder structure, based on the DICOM tags.\n\n"
                                     f"Inside the 'Source Folder', select the folder containing the unsorted DICOM files. You can use the 'Browse...' button to navigate using the file explorer. The 'Destination Folder' is where the sorted DICOM files will be saved. This folder will be created if it does not exist. You can also use the 'Browse...' button here.\n\n"
                                     f"The 'File name structure' and 'Folder name structure' fields allow you to control how the sorting is done. You can use DICOM tags enclosed in curly braces {{}} to define the structure. The 'File name structure' defines how the files will be named, while the 'Folder name structure' defines how the files will be organized into folders. You can use the 'Default' buttons to reset the structures to their default values.\n\n"
