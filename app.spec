@@ -6,8 +6,9 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
-        ('src/dicomsorter/assets/dora.ico', 'dicomsorter/assets'),
-        ('src/dicomsorter/assets/settings.toml', 'dicomsorter/assets'),
+        # ('now_as_seen_from_spec_file', 'when_in_exe'),
+        ('src/dicomsorter/assets/dora.ico', 'assets'),
+        ('src/dicomsorter/assets/settings.toml', 'assets'),
     ],
     hiddenimports=[],
     hookspath=[],
