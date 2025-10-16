@@ -5,7 +5,10 @@ a = Analysis(
     ['src\\dicomsorter\\app.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[
+        ('src/dicomsorter/assets/dora.ico', 'dicomsorter/assets'),
+        ('src/dicomsorter/assets/settings.toml', 'dicomsorter/assets'),
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

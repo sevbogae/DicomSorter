@@ -4,7 +4,9 @@ from tkinter import ttk
 from tkinter import messagebox, filedialog
 
 from dicomsorter.controls.dicom import sort_dicoms
-from dicomsorter.controls.explorer import open_folder, open_website
+from dicomsorter.controls.explorer import open_folder, open_website, get_asset
+from dicomsorter.userinterface.settingsview import SettingsView
+from dicomsorter.controls.settings import read_settings
 
 
 class MainView:
@@ -12,10 +14,10 @@ class MainView:
     def __init__(self) -> None:
         self._root: tk.Tk = tk.Tk()
 
-        self._size: tuple[int, int] = (800, 260)
+        self._size: tuple[int, int] = (750, 500)
         self._position: tuple[int, int] = (0, 0)
         self._title: str = "DORA: DICOM Organizer Application"
-        self._version: tuple[int, int] = (1, 1)
+        self._version: tuple[int, int] = (1, 2)
         self._author: str = "Seppe Van Bogaert"
         self._year: str = "2025"
 
@@ -23,12 +25,16 @@ class MainView:
 
     def _build_ui(self) -> None:
         """Build the user interface."""
+        # Read settings.
+        settings = read_settings()
+
         # Initialize the main window.
         self._root.title(string=self._title)
         self._root.geometry(newGeometry=f"{self._size[0]}x{self._size[1]}"
-                                        f"+{(self._root.winfo_screenwidth() - self._size[0]) // 2 + self._position[0]}"
-                                        f"+{(self._root.winfo_screenheight() - self._size[1]) // 2 + self._position[1]}")
-        self._root.minsize(width=500, height=260)
+                                        f"+{max(0, (self._root.winfo_screenwidth() - self._size[0]) // 2 + self._position[0])}"
+                                        f"+{max(0, (self._root.winfo_screenheight() - self._size[1]) // 2 + self._position[1])}")
+        self._root.minsize(width=750, height=460)
+        self._root.iconbitmap(get_asset("assets/dora.ico"))
 
         # Creating the menubar.
         menubar: tk.Menu = tk.Menu(master=self._root)
@@ -37,6 +43,11 @@ class MainView:
         file_menu: tk.Menu = tk.Menu(master=menubar, tearoff=False)
         file_menu.add_command(label="Exit", command=self._root.quit)
         menubar.add_cascade(label="File", menu=file_menu)
+
+        # Adding the Settings menu.
+        settings_menu: tk.Menu = tk.Menu(master=menubar, tearoff=False)
+        settings_menu.add_command(label="Settings", command=self._open_settings)
+        menubar.add_cascade(label="Settings", menu=settings_menu)
 
         # Adding the Help menu.
         help_menu: tk.Menu = tk.Menu(master=menubar, tearoff=False)
@@ -69,37 +80,108 @@ class MainView:
                    command=lambda: self._browse_button_pressed(kind="destination")
                    ).grid(row=1, column=2, padx=(0, 10), sticky="w")
 
+        # Add a horizontal separator.
+        ttk.Separator(master=self._root, orient="horizontal").pack(fill="x", padx=10, pady=10)
+
         # Add a label, input field, and button to the main window for the file and folder structure.
         structure_frame: ttk.Frame = ttk.Frame(master=self._root, padding="10")
         structure_frame.pack(fill="x")
         structure_frame.columnconfigure(index=1, weight=1)
 
         ttk.Label(master=structure_frame, text="File name structure:").grid(row=0, column=0, padx=(0, 10), sticky="e")
-        ttk.Label(master=structure_frame, text="Folder name structure:").grid(row=1, column=0, padx=(0, 10), sticky="e")
+        ttk.Label(master=structure_frame, text="Folder name structure:").grid(row=2, column=0, padx=(0, 10), sticky="e")
 
         self._default_file_structure = tk.StringVar(
-            value="{Modality}_{InstanceNumber}_{KVP}_{SliceThickness}_{ConvolutionKernel}.dcm"
+            value=settings.get("default_file_structure", "{Modality}_{InstanceNumber}_{KVP}_{SliceThickness}_{ConvolutionKernel}.dcm")
         )
         self._default_folder_structure = tk.StringVar(
-            value="{PatientID}/{StudyDate}/{KVP}/{SliceThickness}/{ConvolutionKernel}"
+            value=settings.get("default_folder_structure", "{PatientID}/{StudyDate}/{KVP}/{SliceThickness}/{ConvolutionKernel}")
         )
         self._file_structure_entry: ttk.Entry = ttk.Entry(master=structure_frame,
                                                           textvariable=self._default_file_structure)
         self._file_structure_entry.grid(row=0, column=1, sticky="ew", rowspan=True, padx=(0, 10))
         self._folder_structure_entry: ttk.Entry = ttk.Entry(master=structure_frame,
                                                             textvariable=self._default_folder_structure)
-        self._folder_structure_entry.grid(row=1, column=1, sticky="ew", rowspan=True, padx=(0, 10))
+        self._folder_structure_entry.grid(row=2, column=1, sticky="ew", rowspan=True, padx=(0, 10))
 
         ttk.Button(master=structure_frame, text="Default",
                    command=lambda: self._default_button_pressed(kind="file")
                    ).grid(row=0, column=2, padx=(0, 10), sticky="w")
         ttk.Button(master=structure_frame, text="Default",
                    command=lambda: self._default_button_pressed(kind="folder")
-                   ).grid(row=1, column=2, padx=(0, 10), sticky="w")
+                   ).grid(row=2, column=2, padx=(0, 10), sticky="w")
+
+        # Add buttons below each entry for adding DICOM tags.
+        self._tag_button_file_frame: ttk.Frame = ttk.Frame(master=structure_frame, padding="10")
+        self._tag_button_file_frame.grid(row=1, column=0, columnspan=3, padx=(0, 10), sticky="ew")
+        self._tag_button_folder_frame: ttk.Frame = ttk.Frame(master=structure_frame, padding="10")
+        self._tag_button_folder_frame.grid(row=3, column=0, columnspan=3, padx=(0, 10), sticky="ew")
+
+        # Add buttons for common DICOM tags for file and folder structure.
+        common_tags: list[str] = ["PatientID", "StudyDate", "Modality", "InstanceNumber", "KVP", "SliceThickness",
+                                  "ConvolutionKernel"]
+        for tag in common_tags:
+            ttk.Button(master=self._tag_button_file_frame, text=tag,
+                       command=lambda t=tag: self._add_dicom_tag_button_pressed(tag=t, kind="file")
+                       ).pack(side="left", padx=5, pady=2)
+            ttk.Button(master=self._tag_button_folder_frame, text=tag,
+                       command=lambda t=tag: self._add_dicom_tag_button_pressed(tag=t, kind="folder")
+                       ).pack(side="left", padx=5, pady=2)
+
+        if not settings.get("enable_common_tags_buttons", True):
+            self._tag_button_file_frame.pack_forget()
+            self._tag_button_folder_frame.pack_forget()
+
+        # Add a horizontal separator.
+        ttk.Separator(master=self._root, orient="horizontal").pack(fill="x", padx=10, pady=10)
 
         # Add a button to start the sorting process.
         ttk.Button(self._root, text="Start Sorting", command=self._start_sorting_button_pressed).pack(pady=20)
         self._root.bind(sequence="<Return>", func=lambda event: self._start_sorting_button_pressed())
+
+    def _open_settings(self) -> None:
+        """Open the settings window."""
+        self._settings_view = SettingsView(master=self._root)
+        self._root.wait_window(self._settings_view.window)
+
+        # Rebuild the UI to reflect any changes in settings.
+        settings = read_settings()
+
+        # Show or hide the common tags buttons based on the settings.
+        if settings.get("enable_common_tags_buttons", True):
+            self._tag_button_file_frame.grid()
+            self._tag_button_folder_frame.grid()
+        else:
+            self._tag_button_file_frame.grid_remove()
+            self._tag_button_folder_frame.grid_remove()
+
+        # Update the entry fields with the default values from settings.
+        # REMARK: Is this necessary? The user could just press the 'Default' button.
+        self._default_file_structure.set(settings.get("default_file_structure", "{Modality}_{InstanceNumber}_{KVP}_{SliceThickness}_{ConvolutionKernel}.dcm"))
+        self._default_folder_structure.set(settings.get("default_folder_structure", "{PatientID}/{StudyDate}/{KVP}/{SliceThickness}/{ConvolutionKernel}"))
+
+    def _add_dicom_tag_button_pressed(self, tag: str, kind: str) -> None:
+        """Add a DICOM tag to the appropriate entry field.
+
+        Parameters
+        ----------
+        tag : str
+            The DICOM tag to add.
+        kind : str
+            The kind of structure to add the tag to ('file' or 'folder').
+        """
+        if kind not in ("file", "folder"):
+            raise ValueError("Invalid kind. Must be 'file' or 'folder'.")
+
+        # Add the tag to the appropriate entry field.
+        entry: tk.Entry = self._file_structure_entry if kind == "file" else self._folder_structure_entry
+        current_text: str = entry.get()
+        if current_text and not current_text.endswith(("/", "_")):
+            # Add a separator if needed.
+            separator: str = "_" if kind == "file" else "/"
+            current_text += separator
+        entry.delete(first=0, last=tk.END)
+        entry.insert(index=0, string=current_text + "{" + tag + "}")
 
     def _copy_source_to_destination(self) -> None:
         """Copy the source folder path to the destination folder path, with minor changes."""
@@ -124,12 +206,15 @@ class MainView:
         if kind not in ("file", "folder"):
             raise ValueError("Invalid kind. Must be 'file' or 'folder'.")
 
+        # Read settings.
+        settings = read_settings()
+
         # Put the default in the appropriate entry field.
         entry: tk.Entry = self._file_structure_entry if kind == "file" else self._folder_structure_entry
         entry.delete(first=0, last=tk.END)
         entry.insert(index=0,
-                     string={"file": "{Modality}_{InstanceNumber}_{KVP}_{SliceThickness}_{ConvolutionKernel}.dcm",
-                             "folder": "{PatientID}/{StudyDate}/{KVP}/{SliceThickness}/{ConvolutionKernel}"}[kind]
+                     string={"file": settings.get("default_file_structure", "{Modality}_{InstanceNumber}_{KVP}_{SliceThickness}_{ConvolutionKernel}.dcm"),
+                             "folder": settings.get("default_folder_structure", "{PatientID}/{StudyDate}/{KVP}/{SliceThickness}/{ConvolutionKernel}")}[kind]
                      )
 
     def _start_sorting_button_pressed(self) -> None:

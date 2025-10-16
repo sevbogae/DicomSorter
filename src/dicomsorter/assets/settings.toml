@@ -1,0 +1,3 @@
+enable_common_tags_buttons = false
+default_file_structure = "{Modality}_{InstanceNumber}_{KVP}_{SliceThickness}_{ConvolutionKernel}.dcm"
+default_folder_structure = "{PatientID}/{StudyDate}/{KVP}/{SliceThickness}/{ConvolutionKernel}"
