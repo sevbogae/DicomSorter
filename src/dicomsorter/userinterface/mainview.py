@@ -303,8 +303,9 @@ class MainView:
                             message=f"{self._title}\n"
                                     f"Seppe Van Bogaert\n"
                                     f"Universiteit Gent\n"
+                                    f"Version {'.'.join([str(i) for i in self._version])}\n"
                                     f"https://github.com/sevbogae/DicomSorter"
-                                    f"Version {'.'.join([str(i) for i in self._version])}")
+                                    )
 
     @staticmethod
     def _show_help() -> None:
