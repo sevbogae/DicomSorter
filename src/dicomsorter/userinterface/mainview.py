@@ -17,7 +17,7 @@ class MainView:
         self._size: tuple[int, int] = (750, 500)
         self._position: tuple[int, int] = (0, 0)
         self._title: str = "DORA: DICOM Organizer Application"
-        self._version: tuple[int, int] = (1, 2)
+        self._version: tuple[int, int] = (1, 3)
         self._author: str = "Seppe Van Bogaert"
         self._year: str = "2025"
 
