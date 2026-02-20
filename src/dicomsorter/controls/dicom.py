@@ -112,7 +112,7 @@ def create_path(dicom: pydicom.Dataset, destination_folder: Path, folder_structu
     return target
 
 
-def save_dicom_file(dicom: pydicom.Dataset, file_path: Path) -> None:
+def save_dicom_file(dicom: pydicom.Dataset, file_path: Path, *, decompress: bool = True) -> None:
     """Save the DICOM dataset to the specified file path.
 
     Parameters
@@ -121,14 +121,25 @@ def save_dicom_file(dicom: pydicom.Dataset, file_path: Path) -> None:
         The DICOM dataset to save.
     file_path : Path
         The full path where the DICOM file should be saved.
+    decompress : bool, optional
+        Whether to attempt decompression if the DICOM dataset is compressed, by default True.
     """
+    # Ensure the parent directory exists before saving the file. If it doesn't exist, it will be created.
     file_path.parent.mkdir(parents=True, exist_ok=True)  # Parents will be created if necessary.
-    if dicom.file_meta.TransferSyntaxUID.is_compressed:
+
+    # Check if the DICOM dataset is compressed by examining the Transfer Syntax UID in the file meta-information. If it
+    # is compressed, attempt to decompress it using the pydicom library's built-in decompression functionality. If
+    # decompression fails for any reason, catch the exception and print a warning message.
+    if decompress and dicom.file_meta.TransferSyntaxUID.is_compressed:
         try:
             dicom.decompress()  # Decompress the DICOM dataset if it is compressed.
         except Exception as e:
             print(f"Warning: Could not decompress DICOM file {file_path}. Error: {e}")
-    dicom.save_as(file_path, write_like_original=False)  # Save as a standard DICOM file.
+
+    try:
+        dicom.save_as(file_path, write_like_original=False)  # Save as a standard DICOM file.
+    except Exception as e:
+        print(f"Error: Could not save DICOM file {file_path}. Error: {e}")
 
 
 def sort_dicoms(source_path: Path, destination_path: Path,
