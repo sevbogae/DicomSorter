@@ -69,7 +69,7 @@ class MainView:
 
         self._source_entry: ttk.Entry = ttk.Entry(master=paths_frame)
         self._source_entry.grid(row=0, column=1, sticky="ew", rowspan=True, padx=(0, 10))
-        self._source_entry.bind(sequence="<FocusOut>", func=lambda event: self._copy_source_to_destination())
+        self._source_entry.bind(sequence="<FocusOut>", func=lambda event: self._fill_destination_field_based_on_source_field())
         self._destination_entry: ttk.Entry = ttk.Entry(master=paths_frame)
         self._destination_entry.grid(row=1, column=1, sticky="ew", rowspan=True, padx=(0, 10))
 
@@ -183,7 +183,7 @@ class MainView:
         entry.delete(first=0, last=tk.END)
         entry.insert(index=0, string=current_text + "{" + tag + "}")
 
-    def _copy_source_to_destination(self) -> None:
+    def _fill_destination_field_based_on_source_field(self) -> None:
         """Copy the source folder path to the destination folder path, with minor changes."""
         entry_dest: str = self._source_entry.get()
 
@@ -232,12 +232,15 @@ class MainView:
         self._progress_bar.pack(fill="x", padx=10, pady=10)
         self._progress_bar["value"] = 0
 
-        # TODO: the folder structure is not used.
         self._progress_iteration = sort_dicoms(source_path=Path(source_folder),
-                                               destination_path=Path(destination_folder))
+                                               destination_path=Path(destination_folder),
+                                               folder_structure=self._folder_structure_entry.get(),
+                                               file_name_structure=self._file_structure_entry.get()
+                                               )
         self._update_progress_bar()
 
     def _update_progress_bar(self) -> None:
+        """Update the progress bar based on the current iteration of the sorting process."""
         try:
             iteration, total = next(self._progress_iteration)
             if total > 0:
@@ -296,7 +299,7 @@ class MainView:
         entry.insert(index=0, string=folder_selected)
 
         if kind == "source":
-            self._copy_source_to_destination()
+            self._fill_destination_field_based_on_source_field()
 
     def _show_about(self) -> None:
         """Show the dialog 'About'."""

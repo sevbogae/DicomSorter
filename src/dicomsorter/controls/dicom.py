@@ -13,7 +13,7 @@ def find_dicoms_in_folder(folder: Path, allowed_extensions: set[str] = None) -> 
         The folder to search for DICOM files.
     allowed_extensions : set[str], optional
         A set of allowed file extensions. If None, the default set {".dcm", ".dicom", ""} is used, which includes
-        files with no extension. By default None.
+        files with no extension. By default, None.
 
     Returns
     -------
@@ -52,7 +52,7 @@ def clean_text(text: str, forbidden_symbols: set[str] = None) -> str:
         The text to clean.
     forbidden_symbols : set[str]
         A set of symbols to replace with underscores. If None, a default set is used:
-        {"*", ".", ",", "\"", "\\", "/", "|", "[", "]", ":", ";", " "}
+        {'*', '.', ',', '\'', '\"', '\\', '/', '|', '[', ']', ':', ';', ' '}
 
     Returns
     -------
@@ -60,7 +60,7 @@ def clean_text(text: str, forbidden_symbols: set[str] = None) -> str:
         The cleaned text.
     """
     if forbidden_symbols is None:
-        forbidden_symbols = {"*", ".", ",", "\"", "\\", "/", "|", "[", "]", ":", ";", " "}
+        forbidden_symbols = {'*', '.', ',', '\'', '\"', '\\', '/', '|', '[', ']', ':', ';', ' '}
 
     # Create a translation table that maps each forbidden symbol to an underscore.
     table = {ord(c): '_' for c in forbidden_symbols}
@@ -95,6 +95,7 @@ def create_path(dicom: pydicom.Dataset, destination_folder: Path, folder_structu
     if file_name_structure is None:
         file_name_structure: str = "{Modality}_{InstanceNumber}_{KVP}_{SliceThickness}_{ConvolutionKernel}.dcm"
 
+    # Get the tags from the DICOM dataset and clean them using the clean_text function. If a tag is missing, use "NA".
     tags: dict[str, str] = {
         "Modality": clean_text(dicom.get("Modality", "NA")),  # (0008,0060).
         "InstanceNumber": clean_text(dicom.get("InstanceNumber", "NA")),  # (0020,0013).
