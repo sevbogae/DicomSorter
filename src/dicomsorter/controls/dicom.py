@@ -152,7 +152,8 @@ def sort_dicoms(source_path: Path, destination_path: Path,
     Yields
     ------
     Generator[tuple[int, int]]
-        A generator yielding tuples of (current_index, total_files) for progress tracking.
+        A generator yielding tuples of (current_index, total_files) for progress tracking. The current_index is
+        1-based, meaning it starts at 1 for the first file processed.
     """
     # Locate all the DICOM files in the source folder. This is done recursively, so all subfolders will be included.
     dicom_files: list[Path] = find_dicoms_in_folder(folder=source_path)
@@ -165,7 +166,7 @@ def sort_dicoms(source_path: Path, destination_path: Path,
     # Process each DICOM file, read its metadata, create the appropriate folder and file name, and save it to the
     # destination. Return the progress as a tuple of (current_index, total_files) for each file processed.
     total: int = len(dicom_files)
-    for i, dicom_file in enumerate(dicom_files):
+    for i, dicom_file in enumerate(dicom_files, start=1):
         ds: pydicom.Dataset = read_dicom_file(dicom_path=dicom_file)
         file_path: Path = create_path(dicom=ds, destination_folder=destination_path,
                                       folder_structure=folder_structure, file_name_structure=file_name_structure)
