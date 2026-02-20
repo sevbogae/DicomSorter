@@ -17,9 +17,9 @@ def open_folder(path: Path) -> None:
     if sys.platform == "win32":
         os.startfile(path)
     elif sys.platform == "darwin":
-        subprocess.run(["open", path])
+        subprocess.run(["open", str(path)])
     else:
-        subprocess.run(["xdg-open", path])
+        subprocess.run(["xdg-open", str(path)])
 
 
 def open_website(url: str) -> None:
