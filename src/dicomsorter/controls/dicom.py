@@ -12,7 +12,8 @@ def find_dicoms_in_folder(folder: Path, allowed_extensions: set[str] = None) -> 
     folder : Path
         The folder to search for DICOM files.
     allowed_extensions : set[str], optional
-        A set of allowed file extensions. If None all files are returned, by default None.
+        A set of allowed file extensions. If None, the default set {".dcm", ".dicom", ""} is used, which includes
+        files with no extension. By default None.
 
     Returns
     -------
@@ -20,7 +21,7 @@ def find_dicoms_in_folder(folder: Path, allowed_extensions: set[str] = None) -> 
         A list of Paths to the found DICOM files.
     """
     if allowed_extensions is None:
-        return [p for p in folder.rglob('*') if p.is_file()]
+        allowed_extensions = {".dcm", ".dicom", ""}
 
     return [p for p in folder.rglob('*') if p.is_file() and p.suffix.lower() in allowed_extensions]
 
