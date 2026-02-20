@@ -38,7 +38,7 @@ def read_dicom_file(dicom_path: Path) -> pydicom.Dataset:
     pydicom.Dataset
         The DICOM dataset.
     """
-    return pydicom.dcmread(dicom_path, force=True)
+    return pydicom.dcmread(fp=dicom_path, force=True)
 
 
 def clean_text(text: str, forbidden_symbols: set[str] = None) -> str:
@@ -123,11 +123,17 @@ def save_dicom_file(dicom: pydicom.Dataset, file_path: Path) -> None:
         The full path where the DICOM file should be saved.
     """
     file_path.parent.mkdir(parents=True, exist_ok=True)  # Parents will be created if necessary.
+    if dicom.file_meta.TransferSyntaxUID.is_compressed:
+        try:
+            dicom.decompress()  # Decompress the DICOM dataset if it is compressed.
+        except Exception as e:
+            print(f"Warning: Could not decompress DICOM file {file_path}. Error: {e}")
     dicom.save_as(file_path, write_like_original=False)  # Save as a standard DICOM file.
 
 
-def sort_dicoms(source_path: Path, destination_path: Path, folder_structure: list[str] = None
-                ) -> Generator[tuple[int, int]]:
+def sort_dicoms(source_path: Path, destination_path: Path,
+                folder_structure: str | None = None, file_name_structure: str | None = None
+                ) -> Generator[tuple[int, int], None, None]:
     """Sort DICOM files from the source folder to the destination folder based on their metadata.
 
     Parameters
@@ -136,8 +142,11 @@ def sort_dicoms(source_path: Path, destination_path: Path, folder_structure: lis
         The source folder containing DICOM files.
     destination_path : Path
         The destination folder where sorted DICOM files will be saved.
-    folder_structure : list[str], optional
-        A list of DICOM tags to use for creating the folder structure. If None, a default structure is used,
+    folder_structure : str, optional
+        A string of DICOM tags to use for creating the folder structure. If None, a default structure is used,
+        by default None.
+    file_name_structure : str, optional
+        A string of DICOM tags to use for creating the file name structure. If None, a default structure is used,
         by default None.
 
     Yields
@@ -145,16 +154,21 @@ def sort_dicoms(source_path: Path, destination_path: Path, folder_structure: lis
     Generator[tuple[int, int]]
         A generator yielding tuples of (current_index, total_files) for progress tracking.
     """
+    # Locate all the DICOM files in the source folder. This is done recursively, so all subfolders will be included.
     dicom_files: list[Path] = find_dicoms_in_folder(folder=source_path)
 
+    # If no DICOM files are found, yield (0, 0) and return immediately.
     if not dicom_files:
         yield 0, 0
         return
 
+    # Process each DICOM file, read its metadata, create the appropriate folder and file name, and save it to the
+    # destination. Return the progress as a tuple of (current_index, total_files) for each file processed.
     total: int = len(dicom_files)
     for i, dicom_file in enumerate(dicom_files):
-        ds = read_dicom_file(dicom_path=dicom_file)
-        file_path = create_path(dicom=ds, destination_folder=destination_path, folder_structure=folder_structure)
+        ds: pydicom.Dataset = read_dicom_file(dicom_path=dicom_file)
+        file_path: Path = create_path(dicom=ds, destination_folder=destination_path,
+                                      folder_structure=folder_structure, file_name_structure=file_name_structure)
         save_dicom_file(dicom=ds, file_path=file_path)
         yield i, total
 

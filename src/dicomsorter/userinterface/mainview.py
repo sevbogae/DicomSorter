@@ -232,6 +232,7 @@ class MainView:
         self._progress_bar.pack(fill="x", padx=10, pady=10)
         self._progress_bar["value"] = 0
 
+        # TODO: the folder structure is not used.
         self._progress_iteration = sort_dicoms(source_path=Path(source_folder),
                                                destination_path=Path(destination_folder))
         self._update_progress_bar()
