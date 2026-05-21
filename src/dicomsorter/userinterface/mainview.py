@@ -3,7 +3,7 @@ from pathlib import Path
 from tkinter import ttk
 from tkinter import messagebox, filedialog
 
-from dicomsorter.controls.dicom import sort_dicoms
+from dicomsorter.controls.dicom import sort_dicoms, restructure_sorted_folders
 from dicomsorter.controls.explorer import open_folder, open_website, get_asset
 from dicomsorter.userinterface.settingsview import SettingsView
 from dicomsorter.controls.settings import read_settings
@@ -227,30 +227,41 @@ class MainView:
                                    message="Please specify both a source and a destination folder.")
             return
 
+        self._destination_path = Path(destination_folder)
+        self._folder_structure = self._folder_structure_entry.get()
+        self._file_name_structure = self._file_structure_entry.get()
+
         # Create a progress bar.
         self._progress_bar = ttk.Progressbar(master=self._root, mode="determinate")
         self._progress_bar.pack(fill="x", padx=10, pady=10)
         self._progress_bar["value"] = 0
 
+        # Phase 1: sort into flat series folders (folder structure applied in phase 2).
         self._progress_iteration = sort_dicoms(source_path=Path(source_folder),
-                                               destination_path=Path(destination_folder),
-                                               folder_structure=self._folder_structure_entry.get(),
-                                               file_name_structure=self._file_structure_entry.get()
-                                               )
-        self._update_progress_bar()
+                                               destination_path=self._destination_path)
+        self._update_progress_bar(phase="sort")
 
-    def _update_progress_bar(self) -> None:
+    def _update_progress_bar(self, phase: str) -> None:
         """Update the progress bar based on the current iteration of the sorting process."""
         try:
             iteration, total = next(self._progress_iteration)
             if total > 0:
                 self._progress_bar["maximum"] = total
                 self._progress_bar["value"] = iteration  # 'iteration' is a one-based index.
-            # Schedule next update.
-            self._root.after_idle(func=self._update_progress_bar)  # type: ignore
+            self._root.after_idle(func=lambda: self._update_progress_bar(phase))  # type: ignore
         except StopIteration:
-            self._progress_bar.destroy()
-            self._show_done_message()
+            if phase == "sort":
+                # Phase 2: rename folders and files to the user-specified structure.
+                self._progress_bar["value"] = 0
+                self._progress_iteration = restructure_sorted_folders(
+                    root=self._destination_path,
+                    folder_structure=self._folder_structure,
+                    file_name_structure=self._file_name_structure or None
+                )
+                self._root.after_idle(func=lambda: self._update_progress_bar(phase="restructure"))  # type: ignore
+            else:
+                self._progress_bar.destroy()
+                self._show_done_message()
 
     def _show_done_message(self) -> None:
         """Show a dialog indicating that the sorting is done, with an option to open the destination folder."""

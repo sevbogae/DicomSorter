@@ -1,7 +1,7 @@
 """DicomSorter application
 
 Author: Seppe Van Bogaert
-Version: 1.4
+Version: 1.5
 """
 from dicomsorter.userinterface.mainview import MainView
 
